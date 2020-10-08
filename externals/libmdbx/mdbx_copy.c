@@ -34,7 +34,7 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>. */
 
-#define MDBX_BUILD_SOURCERY 601b8f96da444abaa8b1e8f58b17dbd4f7e6e2b1894060f9565caadd0bb4ddb8_v0_9_1_0_g44b1a3bcf
+#define MDBX_BUILD_SOURCERY ed294c6c840ef401eb96e1e44a63e26645f6a588548008d4cfffb811bdf07251_v0_9_1_18_g8f490d147
 #ifdef MDBX_CONFIG_H
 #include MDBX_CONFIG_H
 #endif
@@ -675,6 +675,7 @@ extern "C" {
 
 #if defined(__linux__) || defined(__gnu_linux__)
 #include <linux/sysctl.h>
+#include <sched.h>
 #include <sys/sendfile.h>
 #include <sys/statfs.h>
 #endif /* Linux */
@@ -1441,6 +1442,12 @@ MDBX_INTERNAL_VAR MDBX_NtExtendSection mdbx_NtExtendSection;
 static __inline bool mdbx_RunningUnderWine(void) {
   return !mdbx_NtExtendSection;
 }
+
+typedef LSTATUS(WINAPI *MDBX_RegGetValueA)(HKEY hkey, LPCSTR lpSubKey,
+                                           LPCSTR lpValue, DWORD dwFlags,
+                                           LPDWORD pdwType, PVOID pvData,
+                                           LPDWORD pcbData);
+MDBX_INTERNAL_VAR MDBX_RegGetValueA mdbx_RegGetValueA;
 
 #endif /* Windows */
 

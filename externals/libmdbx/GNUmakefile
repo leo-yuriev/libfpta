@@ -130,6 +130,7 @@ IOARENA ?= $(shell \
   (test -x ../../@BUILD/src/ioarena && echo ../../@BUILD/src/ioarena) || \
   (test -x ../../src/ioarena && echo ../../src/ioarena) || which ioarena)
 NN	?= 25000000
+BENCH_CRUD_MODE ?= nosync
 
 ifneq ($(wildcard $(IOARENA)),)
 
@@ -143,10 +144,10 @@ re-bench: clean-bench bench
 define bench-rule
 bench-$(1)_$(2).txt: $(3) $(IOARENA) $(lastword $(MAKEFILE_LIST))
 	LD_LIBRARY_PATH="./:$$$${LD_LIBRARY_PATH}" \
-		$(IOARENA) -D $(1) -B crud -m nosync -n $(2) \
+		$(IOARENA) -D $(1) -B crud -m $(BENCH_CRUD_MODE) -n $(2) \
 		| tee $$@ | grep throughput && \
 	LD_LIBRARY_PATH="./:$$$${LD_LIBRARY_PATH}" \
-		$(IOARENA) -D $(1) -B get,iterate -m sync -r 4 -n $(2) \
+		$(IOARENA) -D $(1) -B get,iterate -m $(BENCH_CRUD_MODE) -r 4 -n $(2) \
 		| tee -a $$@ | grep throughput \
 	|| mv -f $$@ $$@.error
 
@@ -175,5 +176,7 @@ bench: bench-mdbx_$(NN).txt
 bench-debug: bench-debug_10.txt
 
 bench-quartet: bench-mdbx_$(NN).txt bench-lmdb_$(NN).txt bench-rocksdb_$(NN).txt bench-wiredtiger_$(NN).txt
+bench-triplet: bench-mdbx_$(NN).txt bench-lmdb_$(NN).txt bench-sqlite3_$(NN).txt
+bench-couple: bench-mdbx_$(NN).txt bench-lmdb_$(NN).txt
 
 endif
