@@ -34,7 +34,7 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>. */
 
-#define MDBX_BUILD_SOURCERY e1a7d81e4b476baa987453aa05286b9f5bd33dd86c7f03bab6b9d4096655c138_v0_9_3_26_gec95a50b_dirty
+#define MDBX_BUILD_SOURCERY fd8dc9592851622b1850513cbd5f362286e4717cc3291e70560fad138c3b61c7_v0_9_3_44_g0e0682ff
 #ifdef MDBX_CONFIG_H
 #include MDBX_CONFIG_H
 #endif
@@ -1950,15 +1950,17 @@ typedef struct MDBX_db {
 } MDBX_db;
 
 /* database size-related parameters */
-typedef struct mdbx_geo_t {
-  uint16_t grow;   /* datafile growth step in pages */
-  uint16_t shrink; /* datafile shrink threshold in pages */
-  pgno_t lower;    /* minimal size of datafile in pages */
-  pgno_t upper;    /* maximal size of datafile in pages */
-  pgno_t now;      /* current size of datafile in pages */
-  pgno_t next;     /* first unused page in the datafile,
-                    * but actually the file may be shorter. */
-} mdbx_geo_t;
+typedef struct MDBX_geo {
+  uint16_t grow_pv;   /* datafile growth step as a 16-bit packed (exponential
+                           quantized) value */
+  uint16_t shrink_pv; /* datafile shrink threshold as a 16-bit packed
+                           (exponential quantized) value */
+  pgno_t lower;       /* minimal size of datafile in pages */
+  pgno_t upper;       /* maximal size of datafile in pages */
+  pgno_t now;         /* current size of datafile in pages */
+  pgno_t next;        /* first unused page in the datafile,
+                         but actually the file may be shorter. */
+} MDBX_geo;
 
 /* Meta page content.
  * A meta page is the start point for accessing a database snapshot.
@@ -1977,7 +1979,7 @@ typedef struct MDBX_meta {
   uint8_t mm_extra_pagehdr; /* extra bytes in the page header,
                              * zero (nothing) for now */
 
-  mdbx_geo_t mm_geo; /* database size-related parameters */
+  MDBX_geo mm_geo; /* database size-related parameters */
 
   MDBX_db mm_dbs[CORE_DBS]; /* first is free space, 2nd is main db */
                             /* The size of pages used in this DB */
@@ -2381,7 +2383,7 @@ struct MDBX_txn {
   MDBX_txn *mt_parent; /* parent of a nested txn */
   /* Nested txn under this txn, set together with flag MDBX_TXN_HAS_CHILD */
   MDBX_txn *mt_child;
-  mdbx_geo_t mt_geo;
+  MDBX_geo mt_geo;
   /* next unallocated page */
 #define mt_next_pgno mt_geo.next
   /* corresponding to the current size of datafile */
@@ -2914,7 +2916,7 @@ static __maybe_unused __inline void mdbx_jitter4testing(bool tiny) {
 
 /* Default size of memory map.
  * This is certainly too small for any actual applications. Apps should
- * always set  the size explicitly using mdbx_env_set_mapsize(). */
+ * always set the size explicitly using mdbx_env_set_geometry(). */
 #define DEFAULT_MAPSIZE MEGABYTE
 
 /* Number of slots in the reader table.
@@ -3333,7 +3335,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  rc = mdbx_env_open(env, envname, envflags | MDBX_RDONLY, 0664);
+  rc = mdbx_env_open(env, envname, envflags | MDBX_RDONLY, 0);
   if (unlikely(rc != MDBX_SUCCESS)) {
     error("mdbx_env_open", rc);
     goto env_close;
